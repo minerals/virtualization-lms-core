@@ -4,9 +4,11 @@ version := "0.3-SNAPSHOT"
 
 organization := "EPFL"
 
-scalaOrganization := "org.scala-lang.virtualized"
+scalaOrganization := "org.scala-lang"
 
 scalaVersion := virtScala
+
+scalaHome := Some(file(sys.env("SCALA_VIRTUALIZED_HOME")))
 
 scalaSource in Compile <<= baseDirectory(_ / "src")
 
@@ -19,9 +21,11 @@ scalacOptions += "-Yvirtualize"
 //scalacOptions in Compile ++= Seq(/*Unchecked, */Deprecation)
 
 
-libraryDependencies += "org.scala-lang.virtualized" % "scala-library" % virtScala
+libraryDependencies += "org.scala-lang" % "scala-library" % virtScala
 
-libraryDependencies += "org.scala-lang.virtualized" % "scala-compiler" % virtScala
+libraryDependencies += "org.scala-lang" % "scala-compiler" % virtScala
+
+libraryDependencies += "org.scala-lang.plugins" % "scala-continuations-library_2.11" % "1.0.2"
 
 libraryDependencies += scalaTest
 
@@ -36,6 +40,6 @@ publishArtifact in (Compile, packageDoc) := false
 // continuations
 autoCompilerPlugins := true
 
-addCompilerPlugin("org.scala-lang.virtualized.plugins" % "continuations" % virtScala)
+addCompilerPlugin("org.scala-lang.plugins" % "scala-continuations-plugin_2.11.2" % "1.0.2")
 
 scalacOptions += "-P:continuations:enable"
