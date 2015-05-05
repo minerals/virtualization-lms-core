@@ -4,11 +4,11 @@ version := "0.3-SNAPSHOT"
 
 organization := "EPFL"
 
-scalaOrganization := "org.scala-lang"
+scalaOrganization := "org.scala-lang.virtualized"
 
 scalaVersion := virtScala
 
-scalaHome := Some(file(sys.env("SCALA_VIRTUALIZED_HOME")))
+scalaHome := sys.env.get("SCALA_VIRTUALIZED_HOME").map(file)
 
 scalaSource in Compile <<= baseDirectory(_ / "src")
 
@@ -21,9 +21,9 @@ scalacOptions += "-Yvirtualize"
 //scalacOptions in Compile ++= Seq(/*Unchecked, */Deprecation)
 
 
-libraryDependencies += "org.scala-lang" % "scala-library" % virtScala
+libraryDependencies += "org.scala-lang.virtualized" % "scala-library" % virtScala
 
-libraryDependencies += "org.scala-lang" % "scala-compiler" % virtScala
+libraryDependencies += "org.scala-lang.virtualized" % "scala-compiler" % virtScala
 
 libraryDependencies += "org.scala-lang.plugins" % "scala-continuations-library_2.11" % "1.0.2"
 
