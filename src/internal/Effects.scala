@@ -180,6 +180,7 @@ trait Effects extends Expressions with Blocks with Utils {
       if ((es contains x) || (globalMutableSyms contains x)) Nil
       else readSyms(x)
     case s: Sym[Any] => List(s)
+    case ss: Iterable[Any] => ss.toList.flatMap(syms(_))
     case p: Product => p.productIterator.toList.flatMap(readSyms(_))
     case _ => Nil
   }

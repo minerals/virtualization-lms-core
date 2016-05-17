@@ -67,6 +67,7 @@ trait StructExp extends StructOps with StructTags with AtomicWrites with EffectE
   //TODO: we should have a unified way of handling this, e.g., TypeTag[T] instead of Manifest[T]
   object StructType {
     def unapply[T:Manifest] = unapplyStructType[T]
+    def unapply[T:Manifest](e: Exp[T]) = unapplyStructType[T] // for match convenience
   }
 
   def unapplyStructType[T:Manifest]: Option[(StructTag[T], List[(String,Manifest[_])])] = manifest[T] match {

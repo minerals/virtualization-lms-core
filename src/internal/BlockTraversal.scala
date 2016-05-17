@@ -74,18 +74,11 @@ trait NestedBlockTraversal extends BlockTraversal with NestedGraphTraversal {
   def readInScope(y: List[Exp[Any]]): List[Sym[Any]] = {
     (y.flatMap(syms)++innerScope.flatMap(t => readSyms(t.rhs))).distinct
   }
-  
-  // bound/used/free variables in current scope, with input vars x (bound!) and result y (used!)
-  def boundAndUsedInScope(x: List[Exp[Any]], y: List[Exp[Any]]): (List[Sym[Any]], List[Sym[Any]]) = {
-    (boundInScope(x), usedInScope(y))
-  }
 
-  def freeInScope(x: List[Exp[Any]], y: List[Exp[Any]]): List[Sym[Any]] = {
-    val (bound, used) = boundAndUsedInScope(x,y)
+  def freeInScope(bound: List[Exp[Any]], used: List[Exp[Any]]): List[Sym[Any]] = {
     // aks: freeInScope used to collect effects that are not true input dependencies. TR, any better solution?
     // i would expect read to be a subset of used, but there are cases where read has symbols not in used (TODO: investigate)
-    val read = readInScope(y)
-    (used intersect read) diff bound
+    (usedInScope(used) intersect readInScope(used)) diff boundInScope(bound)
   }
 
   // TODO: remove
