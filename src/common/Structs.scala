@@ -49,7 +49,7 @@ trait StructExp extends StructOps with StructTags with AtomicWrites with EffectE
   }
 
   /* override def fresh[T:Manifest] = manifest[T] match {
-    case s if s <:< manifest[Record] =>
+    case s if isRecordType(s) =>
       val m = spawnRefinedManifest
       super.fresh(m)
     case _ => super.fresh
@@ -410,7 +410,10 @@ trait BaseGenStruct extends GenericNestedCodegen {
   val IR: StructExp
   import IR._
 
-  //Moved encounteredStructs to IR
+  protected def isRecordType[A](m: Manifest[A]) = {
+    val isBottomType = (m == manifest[Nothing] || m == manifest[Null])
+    m <:< manifest[Record] && !isBottomType
+  }
 }
 
 trait ScalaGenStruct extends ScalaGenBase with BaseGenStruct with ScalaGenAtomicOps {
@@ -434,7 +437,7 @@ trait ScalaGenStruct extends ScalaGenBase with BaseGenStruct with ScalaGenAtomic
   }
 
   override def remap[A](m: Manifest[A]) = m match {
-    case s if s <:< manifest[Record] => structName(m)
+    case _ if isRecordType(m) => structName(m)
     case _ => super.remap(m)
   }
 

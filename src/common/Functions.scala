@@ -11,7 +11,7 @@ import scala.reflect.SourceContext
 trait Functions extends Base {
 
   def doLambda[A:Manifest,B:Manifest](fun: Rep[A] => Rep[B])(implicit pos: SourceContext): Rep[A => B]
-   def fun[A:Manifest,B:Manifest](f: Rep[A] => Rep[B]): Rep[A=>B] = doLambda(f)
+  def fun[A:Manifest,B:Manifest](f: Rep[A] => Rep[B]): Rep[A=>B] = doLambda(f)
 
   implicit def toLambdaOps[A:Manifest,B:Manifest](fun: Rep[A => B]) = new LambdaOps(fun)
 
@@ -276,20 +276,20 @@ trait ScalaGenTupledFunctions extends ScalaGenFunctions with GenericGenUnboxedTu
 
     case _ => super.emitNode(sym,rhs)
   }
-  
-  def unwrapTupleStr[A](m: Manifest[A]): Array[String] = {
-    val s = m.toString
-    if (s.startsWith("scala.Tuple")) s.slice(s.indexOf("[")+1,s.length-1).filter(c => c != ' ').split(",")
-    else Array(remap(m))
-  } 
-  
-  override def remap[A](m: Manifest[A]): String = m.toString match {    
+
+  private def unwrapTuple[A](m: Manifest[A]) = {
+    if (m.runtimeClass.getName.startsWith("scala.Tuple")) m.typeArguments.map(remap(_))
+    else if (m == manifest[Unit]) Seq()
+    else Seq(remap(m))
+  }
+
+  override def remap[A](m: Manifest[A]): String = m.toString match {
     case f if f.startsWith("scala.Function") =>
       val targs = m.typeArguments.dropRight(1)
       val res = remap(m.typeArguments.last)
-      val targsUnboxed = targs.flatMap(t => unwrapTupleStr(t))
-      val sep = if (targsUnboxed.length > 0) "," else ""
-      "scala.Function" + (targsUnboxed.length) + "[" + targsUnboxed.mkString(",") + sep + res + "]"
+      val targsUnboxed = targs.flatMap(unwrapTuple(_))
+      val sep = if (targsUnboxed.length > 0) ", " else ""
+      "scala.Function" + (targsUnboxed.length) + "[" + targsUnboxed.mkString(", ") + sep + res + "]"
 
     case _ => super.remap(m)
   }
@@ -362,13 +362,13 @@ trait CGenFunctions extends CGenEffect with BaseGenFunctions {
       emitValDef(sym, quote(fun) + "(" + quote(arg) + ")")
     case _ => super.emitNode(sym, rhs)
   }
-  
+
 }
 
 trait CGenTupledFunctions extends CGenFunctions with GenericGenUnboxedTupleAccess {
   val IR: TupledFunctionsExp
   import IR._
-  
+
   /*override def quote(x: Exp[Any]) : String = x match {
     case UnboxedTuple(t) => t.map(quote).mkString("((", ",", "))")
     case _ => super.quote(x)

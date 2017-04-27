@@ -8,7 +8,7 @@ import scala.reflect.RefinedManifest
 trait GenericCodegen extends BlockTraversal {
   val IR: Expressions
   import IR._
-  
+
   /** these methods support a kernel model of execution and are only used by Delite, should be moved into Delite only? **/
   def deviceTarget: Targets.Value = throw new Exception("deviceTarget is not defined for this codegen.")
   def hostTarget: Targets.Value = Targets.getHostTarget(deviceTarget)
@@ -23,7 +23,7 @@ trait GenericCodegen extends BlockTraversal {
 
   def resourceInfoType = ""
   def resourceInfoSym = ""
-  
+
   /******/
 
   def fileExtension = ""
@@ -58,25 +58,7 @@ trait GenericCodegen extends BlockTraversal {
     stream.close()
   }
 
-  // optional type remapping (default is identity)
-  def remap(s: String): String = s
-  def remap[A](s: String, method: String, t: Manifest[A]) : String = remap(s, method, t.toString)
-  def remap(s: String, method: String, t: String) : String = s + method + "[" + remap(t) + "]"
-  def remap[A](m: Manifest[A]): String = m match {
-    case rm: RefinedManifest[A] =>  "AnyRef{" + rm.fields.foldLeft(""){(acc, f) => {val (n,mnf) = f; acc + "val " + n + ": " + remap(mnf) + ";"}} + "}"
-    case _ if m.erasure == classOf[Variable[Any]] =>
-        remap(m.typeArguments.head)
-    case _ =>
-      // call remap on all type arguments
-      val targs = m.typeArguments
-      if (targs.length > 0) {
-        val ms = m.toString
-        ms.take(ms.indexOf("[")+1) + targs.map(tp => remap(tp)).mkString(", ") + "]"
-      }
-      else m.toString
-  }
-  def remapImpl[A](m: Manifest[A]): String = remap(m)
-  //def remapVar[A](m: Manifest[Variable[A]]) : String = remap(m.typeArguments.head)
+  def remap[A](m: Manifest[A]): String = throw new GenerationFailedException(this.toString + ": don't know how to generate name for type: " + m.toString)
 
   def remapHost[A](m: Manifest[A]): String = remap(m).replaceAll(deviceTarget.toString,hostTarget.toString)
 
@@ -107,7 +89,7 @@ trait GenericCodegen extends BlockTraversal {
   }
 
   def emitValDef(sym: Sym[Any], rhs: String): Unit
-  
+
   def emitSource[T : Manifest, R : Manifest](f: Exp[T] => Exp[R], className: String, stream: PrintWriter): List[(Sym[Any], Any)] = {
     val s = fresh[T]
     val body = reifyBlock(f(s))
@@ -162,7 +144,7 @@ trait GenericCodegen extends BlockTraversal {
     case Const(c: Char) => "'"+(""+c).replace("'", "\\'").replace("\n", "\\n")+"'"
     case Const(z) => z.toString
     case Sym(n) => "x"+n
-    case _ => throw new RuntimeException("could not quote " + x)
+    case _ => throw new GenerationFailedException(this.toString + ": don't know how to quote: " + x)
   }
 
   // ----------
@@ -202,7 +184,7 @@ trait GenericCodegen extends BlockTraversal {
       case e: Exp[_] => quote(e)
       case m: Manifest[_] => remap(m)
       case s: String => s
-      case _ => throw new RuntimeException(s"Could not quote or remap $arg")
+      case _ => throw new GenerationFailedException(s"$this: don't know how to quote or remap: $arg")
     }
 
     // First line of a part of the context may contain
