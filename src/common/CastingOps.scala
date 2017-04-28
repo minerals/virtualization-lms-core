@@ -11,7 +11,7 @@ trait CastingOps extends Variables with OverloadHack {
   //implicit def anyToCastingOps[A:Manifest](lhs: A) = new CastingOpsCls(lhs)
   implicit def repAnyToCastingOps[A:Manifest](lhs: Rep[A]) = new CastingOpsCls(lhs)
   implicit def varAnyToCastingOps[A:Manifest](lhs: Var[A]) = new CastingOpsCls(readVar(lhs))
-    
+
   class CastingOpsCls[A:Manifest](lhs: Rep[A]){
     def IsInstanceOf[B:Manifest](implicit pos: SourceContext): Rep[Boolean] = rep_isinstanceof(lhs, manifest[A], manifest[B])
     def AsInstanceOf[B:Manifest](implicit pos: SourceContext): Rep[B] = rep_asinstanceof(lhs, manifest[A], manifest[B])
@@ -31,6 +31,8 @@ trait CastingOpsExp extends CastingOps with BaseExp with EffectExp {
   def rep_asinstanceof[A,B:Manifest](lhs: Exp[A], mA: Manifest[A], mB: Manifest[B])(implicit pos: SourceContext) : Exp[B] = toAtom(RepAsInstanceOf(lhs,mA,mB))(mB,pos)
 
   override def mirror[A:Manifest](e: Def[A], f: Transformer)(implicit pos: SourceContext): Exp[A] = (e match {
+    case RepIsInstanceOf(lhs, mA, mB) => rep_isinstanceof(f(lhs),mA,mB)(pos)
+    case Reflect(e@RepIsInstanceOf(lhs, mA, mB), u, es) => reflectMirrored(Reflect(RepIsInstanceOf(f(lhs),mA,mB), mapOver(f,u), f(es)))(mtype(manifest[A]), pos)
     case RepAsInstanceOf(lhs, mA, mB) => rep_asinstanceof(f(lhs),mA,mB)(mtype(mB),pos)
     case Reflect(e@RepAsInstanceOf(lhs, mA, mB), u, es) => reflectMirrored(Reflect(RepAsInstanceOf(f(lhs),mA,mB)(mtype(mB)), mapOver(f,u), f(es)))(mtype(manifest[A]), pos)
     case _ => super.mirror(e,f)
@@ -40,7 +42,7 @@ trait CastingOpsExp extends CastingOps with BaseExp with EffectExp {
 trait ScalaGenCastingOps extends ScalaGenBase {
   val IR: CastingOpsExp
   import IR._
-  
+
   override def emitNode(sym: Sym[Any], rhs: Def[Any]) = rhs match {
     case RepIsInstanceOf(x,mA,mB) => emitValDef(sym, src"$x.isInstanceOf[$mB]")
     case RepAsInstanceOf(x,mA,mB) => emitValDef(sym, src"$x.asInstanceOf[$mB]")
@@ -48,7 +50,7 @@ trait ScalaGenCastingOps extends ScalaGenBase {
   }
 }
 
-trait CLikeGenCastingOps extends CLikeGenBase { 
+trait CLikeGenCastingOps extends CLikeGenBase {
   val IR: CastingOpsExp
   import IR._
 
@@ -61,6 +63,6 @@ trait CLikeGenCastingOps extends CLikeGenBase {
     }
 }
 
-trait CudaGenCastingOps extends CudaGenBase with CLikeGenCastingOps 
-trait OpenCLGenCastingOps extends OpenCLGenBase with CLikeGenCastingOps 
-trait CGenCastingOps extends CGenBase with CLikeGenCastingOps 
+trait CudaGenCastingOps extends CudaGenBase with CLikeGenCastingOps
+trait OpenCLGenCastingOps extends OpenCLGenBase with CLikeGenCastingOps
+trait CGenCastingOps extends CGenBase with CLikeGenCastingOps
