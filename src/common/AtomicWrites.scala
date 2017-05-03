@@ -178,8 +178,8 @@ trait BaseGenAtomicOps extends GenericCodegen {
 
   def quote(t: AtomicTracer): String = t match {
     case VarTracer => ""   // no sym to compare to deliteInputs here.. should be ok though
-    case StructTracer(f) => "." + f                    // [struct].field
-    case ArrayTracer(i) => "(" + quote(i) + ".toInt)"  // [array](i.toInt)
+    case StructTracer(f) => "." + f              // [struct].field
+    case ArrayTracer(i) => "(" + quote(i) + ")"  // [array](i)
     case _ => sys.error("No codegen rule defined for atomic trace " + t)
   }
   def quote(trace: List[AtomicTracer]): String = trace.map{t => quote(t)}.mkString("")
@@ -195,7 +195,7 @@ trait BaseGenAtomicOps extends GenericCodegen {
   def emitAtomicWrite(sym: Sym[Any], d: AtomicWrite[_], trace: Option[String]): Unit = d match {
     // e.g.:
     // case DeliteArrayUpdate(a,i,x) =>
-    //  emitValDef(sym, trace.getOrElse(quote(a)) + "(" + quote(i) + ".toInt) = " + quote(x))
+    //  emitValDef(sym, trace.getOrElse(quote(a)) + "(" + quote(i) + ") = " + quote(x))
     case _ => throw new GenerationFailedException("Don't know how to generate code for atomic write: " + d)
   }
 

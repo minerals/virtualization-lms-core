@@ -104,12 +104,12 @@ trait ArrayOpsExp extends ArrayOps with EffectExp with VariablesExp {
     case ArrayLength(x) => array_length(f(x))
     case e@ArraySort(x) => array_sort(f(x))(e.m,pos)
     case e@ArrayCopy(a,ap,d,dp,l) => toAtom(ArrayCopy(f(a),f(ap),f(d),f(dp),f(l))(e.m))(mtype(manifest[A]),pos)
-    case Reflect(e@ArrayNew(n), u, es) => reflectMirrored(Reflect(ArrayNew(f(n))(e.m), mapOver(f,u), f(es)))(mtype(manifest[A]), pos)    
-    case Reflect(e@ArrayLength(x), u, es) => reflectMirrored(Reflect(ArrayLength(f(x))(e.m), mapOver(f,u), f(es)))(mtype(manifest[A]), pos)    
+    case Reflect(e@ArrayNew(n), u, es) => reflectMirrored(Reflect(ArrayNew(f(n))(e.m), mapOver(f,u), f(es)))(mtype(manifest[A]), pos)
+    case Reflect(e@ArrayLength(x), u, es) => reflectMirrored(Reflect(ArrayLength(f(x))(e.m), mapOver(f,u), f(es)))(mtype(manifest[A]), pos)
     case Reflect(ArrayApply(l,r), u, es) => reflectMirrored(Reflect(ArrayApply(f(l),f(r))(mtype(manifest[A])), mapOver(f,u), f(es)))(mtype(manifest[A]), pos)
     case Reflect(e@ArraySort(x), u, es) => reflectMirrored(Reflect(ArraySort(f(x))(e.m), mapOver(f,u), f(es)))(mtype(manifest[A]), pos)
-    case Reflect(ArrayUpdate(l,i,r), u, es) => reflectMirrored(Reflect(ArrayUpdate(f(l),f(i),f(r)), mapOver(f,u), f(es)))(mtype(manifest[A]), pos)   
-    case Reflect(e@ArrayCopy(a,ap,d,dp,l), u, es) => reflectMirrored(Reflect(ArrayCopy(f(a),f(ap),f(d),f(dp),f(l))(e.m), mapOver(f,u), f(es)))(mtype(manifest[A]), pos)     
+    case Reflect(ArrayUpdate(l,i,r), u, es) => reflectMirrored(Reflect(ArrayUpdate(f(l),f(i),f(r)), mapOver(f,u), f(es)))(mtype(manifest[A]), pos)
+    case Reflect(e@ArrayCopy(a,ap,d,dp,l), u, es) => reflectMirrored(Reflect(ArrayCopy(f(a),f(ap),f(d),f(dp),f(l))(e.m), mapOver(f,u), f(es)))(mtype(manifest[A]), pos)
     case _ => super.mirror(e,f)
   }).asInstanceOf[Exp[A]] // why??
 
@@ -204,7 +204,7 @@ trait ScalaGenArrayOps extends BaseGenArrayOps with ScalaGenBase {
   val ARRAY_LITERAL_MAX_SIZE = 1000
 
   override def emitNode(sym: Sym[Any], rhs: Def[Any]) = rhs match {
-    case a@ArrayNew(n) => emitValDef(sym, src"new Array[${remap(a.m)}]($n)")
+    case a@ArrayNew(n) => emitValDef(sym, src"new Array[${remap(a.m)}]($n.toInt)")
     case e@ArrayFromSeq(xs) => {
       emitData(sym, xs)
       emitValDef(sym,
@@ -224,12 +224,12 @@ trait ScalaGenArrayOps extends BaseGenArrayOps with ScalaGenBase {
         }
       )
     }
-    case ArrayApply(x,n) => emitValDef(sym, src"$x($n)")
-    case ArrayUpdate(x,n,y) => emitValDef(sym, src"$x($n) = $y")
+    case ArrayApply(x,n) => emitValDef(sym, src"$x($n.toInt)")
+    case ArrayUpdate(x,n,y) => emitValDef(sym, src"$x($n.toInt) = $y")
     case ArrayLength(x) => emitValDef(sym, src"$x.length")
     case ArrayForeach(a,x,block) =>
       gen"""val $sym = $a.foreach{
-           |$x => 
+           |$x =>
            |${nestedBlock(block)}
            |$block
            |}"""
