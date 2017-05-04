@@ -204,7 +204,7 @@ trait ScalaGenArrayOps extends BaseGenArrayOps with ScalaGenBase {
   val ARRAY_LITERAL_MAX_SIZE = 1000
 
   override def emitNode(sym: Sym[Any], rhs: Def[Any]) = rhs match {
-    case a@ArrayNew(n) => emitValDef(sym, src"new Array[${remap(a.m)}]($n.toInt)")
+    case a@ArrayNew(n) => emitValDef(sym, src"new Array[${remap(a.m)}]($n)")
     case e@ArrayFromSeq(xs) => {
       emitData(sym, xs)
       emitValDef(sym,
@@ -224,8 +224,8 @@ trait ScalaGenArrayOps extends BaseGenArrayOps with ScalaGenBase {
         }
       )
     }
-    case ArrayApply(x,n) => emitValDef(sym, src"$x($n.toInt)")
-    case ArrayUpdate(x,n,y) => emitValDef(sym, src"$x($n.toInt) = $y")
+    case ArrayApply(x,n) => emitValDef(sym, src"$x($n)")
+    case ArrayUpdate(x,n,y) => emitValDef(sym, src"$x($n) = $y")
     case ArrayLength(x) => emitValDef(sym, src"$x.length")
     case ArrayForeach(a,x,block) =>
       gen"""val $sym = $a.foreach{
